@@ -3,10 +3,33 @@ import { Canvas, ThreeElements, useFrame, useThree } from "@react-three/fiber";
 import { Float, RoundedBox } from "@react-three/drei";
 import * as THREE from "three";
 import affanPhoto from "./assets/affan-birthday-photo.jpg";
+import ageSevenVideo from "./assets/affan-age-seven.mp4";
+import ageSixPhoto from "./assets/affan-age-six.jpg";
+import ageThreePhoto from "./assets/affan-age-three.jpg";
+import creativityPhoto from "./assets/affan-creativity.jpg";
+import finalTributeVideo from "./assets/affan-final-tribute.mp4";
+import firstYearPhoto from "./assets/affan-first-year.jpg";
+import firstStepsVideo from "./assets/affan-first-steps.mp4";
+import goodTimeVideo from "./assets/affan-good-time.mp4";
+import growingUpPhoto from "./assets/affan-growing-up.jpg";
+import schoolAgainVideo from "./assets/affan-school-again.mp4";
+import schoolVideo from "./assets/affan-school.mp4";
 import birthdayBackground from "./assets/happy-birthday-background.mp4";
 
 type Screen = "title" | "creator" | "obby" | "finale";
 type Surprise = "gift" | "balloons" | "candles" | null;
+type Memory =
+  | "first-year"
+  | "first-steps"
+  | "age-three"
+  | "creativity"
+  | "school"
+  | "growing-up"
+  | "school-again"
+  | "good-time"
+  | "age-six"
+  | "age-seven"
+  | "final-tribute";
 type Action = "idle" | "run" | "jump" | "wave" | "cheer";
 type FinaleStage = "candles" | "ready" | "cutting" | "ride" | "done";
 type Config = { skin: number; hair: number; shirt: number; hat: number; pet: number };
@@ -41,6 +64,9 @@ const PATH = [
   new THREE.Vector3(-1.4, 3.65, -40),
   new THREE.Vector3(2.3, 3.1, -44),
   new THREE.Vector3(0, 4.25, -48),
+  new THREE.Vector3(-3.2, 4.8, -52),
+  new THREE.Vector3(0, 5.3, -56),
+  new THREE.Vector3(3, 5.8, -60),
 ];
 const FAMILY = [
   ["Umair Baba", COLORS.blue, 3],
@@ -1496,6 +1522,87 @@ function SurpriseOverlay({
   );
 }
 
+function MemoryOverlay({ type, close }: { type: Memory; close: () => void }) {
+  const firstYear = type === "first-year";
+  const firstSteps = type === "first-steps";
+  const video =
+    type === "school"
+      ? schoolVideo
+      : type === "school-again"
+        ? schoolAgainVideo
+        : type === "good-time"
+          ? goodTimeVideo
+          : type === "age-seven"
+            ? ageSevenVideo
+            : type === "final-tribute"
+              ? finalTributeVideo
+              : firstStepsVideo;
+  const image =
+    type === "age-three"
+      ? ageThreePhoto
+      : type === "creativity"
+        ? creativityPhoto
+        : type === "growing-up"
+          ? growingUpPhoto
+          : type === "age-six"
+            ? ageSixPhoto
+            : firstYearPhoto;
+  return (
+    <div className="surprise-overlay">
+      <article className="memory-card">
+        {firstSteps ||
+        type === "school" ||
+        type === "school-again" ||
+        type === "good-time" ||
+        type === "age-seven" ||
+        type === "final-tribute" ? (
+          <video src={video} controls autoPlay playsInline preload="metadata" />
+        ) : (
+          <img
+            src={image}
+            alt={
+              firstYear
+                ? "Affan during his first year"
+                : type === "age-three"
+                  ? "Affan at age three"
+                  : type === "creativity"
+                    ? "Affan being creative"
+                    : type === "age-six"
+                      ? "Affan at age six"
+                      : "Affan learning colors"
+            }
+          />
+        )}
+        {type === "age-three" && <h2>Age 3: The Little Trouble Maker 😂</h2>}
+        <p>
+          {firstYear
+            ? "Well, this was Affan's first year. Mostly chilling, getting carried around, and figuring out how this whole world works. But things were about to get interesting..."
+            : firstSteps
+              ? "And then came the day he decided walking was better than being carried"
+              : type === "age-three"
+                ? "By now, Affan had figured out how to walk, talk, run around and probably get into things he wasn't supposed to. Sitting still? Not really his thing."
+                : type === "creativity"
+                  ? "The creativity was there. The execution? Questionable."
+                  : type === "school"
+                    ? "Bro was living his best life until someone mentioned SCHOOL."
+                    : type === "growing-up"
+                      ? "Then came the growing-up phase. Learning colors, drawing masterpieces, and discovering that crayons work on walls too."
+                      : type === "school-again"
+                        ? "And then... school again. And again. And AGAIN. 😭 At this point, even your Phupho wanted to cry. 💀"
+                        : type === "good-time"
+                          ? "Not sure what was happening here, but he was clearly having a good time."
+                          : type === "age-six"
+                            ? "And just like that, he's 6! life was basically school, snacks and finding new ways to cause chaos."
+                            : type === "age-seven"
+                              ? "Age 7: Looking cooler, getting taller, and stealing everyone's spotlight. 😎."
+                              : "Watched this little guy grow through all these years, and somehow he keeps getting more adorable. No matter how big you get, you'll always be our little favourite."}
+        </p>
+        <SoftButton icon="arrow" onClick={close} label="Continue" />
+      </article>
+    </div>
+  );
+}
+
 function ObbyScreen({
   config,
   finish,
@@ -1510,9 +1617,10 @@ function ObbyScreen({
   const [coins, setCoins] = useState(0);
   const [stars, setStars] = useState(0);
   const [surprise, setSurprise] = useState<Surprise>(null);
+  const [memory, setMemory] = useState<Memory | null>(null);
   const queuedJumps = useRef(0);
   const requestJump = () => {
-    if (surprise || step >= PATH.length - 1) return;
+    if (surprise || memory || step >= PATH.length - 1) return;
     if (moving) {
       queuedJumps.current = Math.min(queuedJumps.current + 1, PATH.length - 1 - step);
       sound("tap");
@@ -1526,15 +1634,45 @@ function ObbyScreen({
     setMoving(false);
     setCoins((c) => c + 1);
     if (step % 2 === 0) setStars((s) => s + 1);
-    if (step === 3) {
+    if (step === 2) {
       queuedJumps.current = 0;
-      setSurprise("gift");
+      setMemory("first-year");
+    } else if (step === 3) {
+      queuedJumps.current = 0;
+      setMemory("first-steps");
+    } else if (step === 4) {
+      queuedJumps.current = 0;
+      setMemory("age-three");
+    } else if (step === 5) {
+      queuedJumps.current = 0;
+      setMemory("creativity");
     } else if (step === 6) {
       queuedJumps.current = 0;
       setSurprise("balloons");
+    } else if (step === 7) {
+      queuedJumps.current = 0;
+      setMemory("school");
+    } else if (step === 8) {
+      queuedJumps.current = 0;
+      setMemory("growing-up");
     } else if (step === 9) {
       queuedJumps.current = 0;
       setSurprise("candles");
+    } else if (step === 10) {
+      queuedJumps.current = 0;
+      setMemory("school-again");
+    } else if (step === 11) {
+      queuedJumps.current = 0;
+      setMemory("good-time");
+    } else if (step === 12) {
+      queuedJumps.current = 0;
+      setMemory("age-six");
+    } else if (step === 13) {
+      queuedJumps.current = 0;
+      setMemory("age-seven");
+    } else if (step === 14) {
+      queuedJumps.current = 0;
+      setMemory("final-tribute");
     } else if (step === PATH.length - 1) setTimeout(finish, 500);
     else if (queuedJumps.current > 0) {
       queuedJumps.current -= 1;
@@ -1584,6 +1722,16 @@ function ObbyScreen({
           addStar={() => {
             sound("pop");
             setStars((s) => s + 1);
+          }}
+        />
+      )}
+      {memory && (
+        <MemoryOverlay
+          type={memory}
+          close={() => {
+            sound("happy");
+            if (memory === "first-steps") setSurprise("gift");
+            setMemory(null);
           }}
         />
       )}
