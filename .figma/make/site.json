@@ -1,0 +1,11 @@
+{
+  "title": "Happy Birthday Affan",
+  "description": "An interactive 3D birthday game celebrating an 8-year-old's special day with character creation, obstacle courses, and a family celebration finale featuring gentle gameplay and joyful animations.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
